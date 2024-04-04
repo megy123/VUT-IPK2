@@ -9,6 +9,9 @@ Date:       04.04.2024
 #include "parser.h"
 #include <getopt.h>
 #include <string.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <algorithm>
 
 int parseArgs(int argc, char *argv[], ArgValues_t *p_args)
 {
@@ -24,13 +27,20 @@ int parseArgs(int argc, char *argv[], ArgValues_t *p_args)
     p_args->igmp = false;
     p_args->mld = false;
 
+    //print available interfaces
     if(argc == 2 && ((strcmp(argv[1], "-i") == 0) || (strcmp(argv[1], "--interface") == 0)))
     {
-        std::cout << "Interfaces: \n";
-        //TODO: vypisať interfacy
+        std::cout << "\n";
+        std::vector<std::string> ifcs = getInterfaceNames();
+        for(int i = 0; i < ifcs.size(); i++)
+        {
+            std::cout << ifcs[i] << "\n";
+        }
+        std::cout << "\n";
         return 1;
     }
 
+    //no arguments specified
     //TODO: čokoľvel čo nemá - môže byť passnute ako argument bez postihu...
     if(argc == 1)
     {
@@ -100,4 +110,31 @@ int parseArgs(int argc, char *argv[], ArgValues_t *p_args)
         }
     }
     return 0;
+}
+
+std::vector<std::string> getInterfaceNames()
+{
+    std::vector<std::string> output;
+
+    //get all interfaces
+    struct ifaddrs *interface_addrs;
+    if (getifaddrs(&interface_addrs) == -1) {
+        std::cerr << "ERR: Could not resolve interface!\n";
+        exit(1);
+    }
+
+    //get interface names
+    for (struct ifaddrs *ifa = interface_addrs; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr == NULL)continue;
+
+        if (std::find(output.begin(), output.end(), ifa->ifa_name) == output.end())
+        {
+            output.push_back(ifa->ifa_name);
+        }
+    }
+
+    freeifaddrs(interface_addrs);
+
+    return output;
 }

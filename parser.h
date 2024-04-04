@@ -8,6 +8,7 @@ Date:       04.04.2024
 #define PARSER_H
 
 #include <iostream>
+#include <vector>
 
 //structruce used to store arguments
 typedef struct {
@@ -27,6 +28,8 @@ typedef struct {
     bool mld;
 } ArgValues_t;
 
+std::vector<std::string> getInterfaceNames();
 int parseArgs(int argc, char *argv[], ArgValues_t *p_args);
+
 
 #endif
