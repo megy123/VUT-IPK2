@@ -12,7 +12,7 @@ OBJS := $(SRCS:%.cpp=%.o)
 
 # Main target
 ipk-sniffer: $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -lpcap
 
 # Utils
 zip:

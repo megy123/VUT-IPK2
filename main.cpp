@@ -6,6 +6,7 @@ Date:       04.04.2024
 */
 #include <iostream>
 #include "parser.h"
+#include "sniffer.h"
 
 void printArgs(ArgValues_t args)
 {
@@ -26,11 +27,15 @@ void printArgs(ArgValues_t args)
 
 int main(int argc, char *argv[])
 {
+    //parse arguments
     ArgValues_t args;
-
     if(parseArgs(argc, argv, &args) == 1)exit(1);
 
-    printArgs(args);
+    //printArgs(args);
+
+    //sniffing packets
+    Sniffer *sniffer = new Sniffer(args);
+    sniffer->sniff();
 
 }
 
