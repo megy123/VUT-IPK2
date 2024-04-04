@@ -18,10 +18,12 @@ Date:       04.04.2024
 
 class Sniffer{
 private:
-    ArgValues_t inputArgs;
+    std::string interface;
+    std::string filters;
+    int pakcets_count;
 
+    std::string getFilterString(ArgValues_t inputArgs);
     pcap_t* getReceiveHandle(const char* device, const char* filter);
-    //static void parsePacket(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr);
 public:
     Sniffer(ArgValues_t inputArgs);
     void sniff();
