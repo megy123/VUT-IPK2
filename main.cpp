@@ -7,6 +7,9 @@ Date:       04.04.2024
 #include <iostream>
 #include "parser.h"
 #include "sniffer.h"
+#include <signal.h>
+
+Sniffer *sniffer;
 
 void printArgs(ArgValues_t args)
 {
@@ -25,6 +28,12 @@ void printArgs(ArgValues_t args)
     std::cout << "MLD: " << args.mld << "\n";
 }
 
+void interruptHandler(int errorCode)
+{
+    sniffer->closeConnection();
+    exit(errorCode);
+}
+
 int main(int argc, char *argv[])
 {
     //parse arguments
@@ -34,7 +43,8 @@ int main(int argc, char *argv[])
     //printArgs(args);
 
     //sniffing packets
-    Sniffer *sniffer = new Sniffer(args);
+    sniffer = new Sniffer(args);
+    signal(SIGINT, interruptHandler);//interrupt signal
     sniffer->sniff();
 
 }

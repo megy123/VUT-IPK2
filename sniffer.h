@@ -21,11 +21,14 @@ private:
     std::string interface;
     std::string filters;
     int pakcets_count;
+    pcap_t *sniffer;
 
     std::string getFilterString(ArgValues_t inputArgs);
     pcap_t* getReceiveHandle(const char* device, const char* filter);
+    
 public:
     Sniffer(ArgValues_t inputArgs);
+    void closeConnection();
     void sniff();
 };
 

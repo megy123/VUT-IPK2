@@ -12,7 +12,7 @@ Sniffer::Sniffer(ArgValues_t inputArgs)
     this->interface = inputArgs.interface;
     this->pakcets_count = inputArgs.n;
     this->filters = getFilterString(inputArgs);
-    //TODO: Ctrl+C interrupt
+    this->sniffer = NULL;
 }
 
 std::string Sniffer::getFilterString(ArgValues_t inputArgs)
@@ -150,23 +150,26 @@ void parsePacket(u_char *user, const struct pcap_pkthdr *packethdr, const u_char
     std::cout << "Received packet\n";
 }
 
+void Sniffer::closeConnection()
+{
+    pcap_close(this->sniffer);
+}
+
 void Sniffer::sniff()
 {
-    pcap_t *sniffer;
-
     //set up sniffer handle
-    if((sniffer = getReceiveHandle(this->interface.c_str(), this->filters.c_str())) == NULL)
+    if((this->sniffer = getReceiveHandle(this->interface.c_str(), this->filters.c_str())) == NULL)
     {
         std::cerr << "ERR: Could not create receive handle!\n";
         exit(1);
     }
 
     //receive packets
-    if (pcap_loop(sniffer, this->pakcets_count, parsePacket, (u_char*)NULL) < 0) {
-        std::cerr << "ERR: Error while receiving packets! msg: " << pcap_geterr(sniffer) << "\n";
+    if (pcap_loop(this->sniffer, this->pakcets_count, parsePacket, (u_char*)NULL) < 0) {
+        std::cerr << "ERR: Error while receiving packets! msg: " << pcap_geterr(this->sniffer) << "\n";
         exit(1);
     }
 
     //close sniffer_handle
-    pcap_close(sniffer);
+    closeConnection();
 }
