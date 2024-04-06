@@ -31,5 +31,4 @@ typedef struct {
 std::vector<std::string> getInterfaceNames();
 int parseArgs(int argc, char *argv[], ArgValues_t *p_args);
 
-
 #endif

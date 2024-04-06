@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 
     //sniffing packets
     sniffer = new Sniffer(args);
-    signal(SIGINT, interruptHandler);//interrupt signal
+    signal(SIGINT, interruptHandler); //interrupt signal
     sniffer->sniff();
 
 }
