@@ -11,12 +11,24 @@ Date:       04.04.2024
 #include <netinet/ether.h>
 #include <sys/time.h>
 #include <string.h>
-
+#include "stdio.h"
 
 #define PACKET_PRINT_LINE_LEN 0x10
 
 
 //helper functions
+bool getIPType(const u_char *packetptr)
+{
+    if(((packetptr[12] << 8) | packetptr[13]) == 0x0800)
+    {
+        return true; //IpV4
+    }
+    else
+    {
+        return false; //Ipv6
+    }
+}
+
 std::string formatTimestamp(struct timeval time)
 {
     std::string output;
@@ -46,13 +58,26 @@ std::string formatTimestamp(struct timeval time)
 
 void printIpsPorts(const u_char *packetptr)
 {
+    bool ipType = getIPType(packetptr);
+
     packetptr += 14;//LINKTYPE_ETHERNET
 
     //IPs
     struct ip* iphdr = (struct ip*)packetptr;
     
-    std::cout << "src IP: " << inet_ntoa(iphdr->ip_src) << "\n";
-    std::cout << "dst IP: " << inet_ntoa(iphdr->ip_dst) << "\n";
+    if(ipType)//Ipv4
+    {
+        std::cout << "src IP: " << inet_ntoa(iphdr->ip_src) << "\n";
+        std::cout << "dst IP: " << inet_ntoa(iphdr->ip_dst) << "\n";
+    }
+    else//Ipv6
+    {
+        char buff[INET_ADDRSTRLEN];
+        std::cout << "src IP: " << inet_ntop(AF_INET6, &(iphdr->ip_src), buff, INET_ADDRSTRLEN) << "\n";
+        std::cout << "dst IP: " << inet_ntop(AF_INET6, &(iphdr->ip_src), buff, INET_ADDRSTRLEN) << "\n";
+        
+    }
+
 
     //PORTs
     int srcPort;
@@ -92,8 +117,18 @@ void printMacAddresses(const u_char *packetptr)
 {
     auto eptr = (struct ether_header *)packetptr;
 
-    std::cout << "src MAC: " << ether_ntoa((struct ether_addr *)eptr->ether_shost) << "\n";
-    std::cout << "dst MAC: " << ether_ntoa((struct ether_addr *)eptr->ether_dhost) << "\n";
+    struct ether_addr *saddr = (struct ether_addr *)eptr->ether_shost;
+    struct ether_addr *daddr = (struct ether_addr *)eptr->ether_dhost;
+
+    printf("src MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+            saddr->ether_addr_octet[0], saddr->ether_addr_octet[1],
+            saddr->ether_addr_octet[2], saddr->ether_addr_octet[3],
+            saddr->ether_addr_octet[4], saddr->ether_addr_octet[5]);
+
+    printf("dst MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+            daddr->ether_addr_octet[0], daddr->ether_addr_octet[1],
+            daddr->ether_addr_octet[2], daddr->ether_addr_octet[3],
+            daddr->ether_addr_octet[4], daddr->ether_addr_octet[5]);
 }
 
 char getPacketChar(uint8_t c)
@@ -197,21 +232,24 @@ std::string Sniffer::getFilterString(ArgValues_t inputArgs)
     //protocols
     if(inputArgs.icmp4 || inputArgs.icmp6 || inputArgs.arp || inputArgs.mld ||inputArgs.ndp || inputArgs.igmp)
     {
+        std::string protocols;
+        protocols += " && (";
+
         if(inputArgs.icmp4)//ICMP4
         {
-            filter += " && icmp";
+            protocols += " && icmp";
         }
         if(inputArgs.arp)//ARP
         {
-            filter += " && arp";
+            protocols += " && arp";
         }   
         if(inputArgs.igmp)//IGMP
         {
-            filter += " && igmp";
+            protocols += " && igmp";
         }
         if(inputArgs.icmp6)//ICMP6
         {
-            filter += " && icmp6";
+            protocols += " && icmp6";
         }
         if(inputArgs.ndp)//NDP
         {
@@ -220,13 +258,11 @@ std::string Sniffer::getFilterString(ArgValues_t inputArgs)
             // Type 135: Neighbor Solicitation. ...
             // Type 136: Neighbor Advertisement. ...
             // Type 137: Redirect.
-            filter += " && (icmp6-routeradvert ||\
-                            icmp6-routersolicit ||\
-                            icmp6-neighborsolicit ||\
-                            icmp6-neighboradvert ||\
-                            icmp6-ineighbordiscoverysolicit ||\
-                            icmp6-ineighbordiscoveryadvert ||\
-                            icmp6-redirect)";
+            protocols += " && ( icmp6[icmp6type] = icmp6-routeradvert ||\
+                                icmp6[icmp6type] = icmp6-routersolicit ||\
+                                icmp6[icmp6type] = icmp6-neighborsolicit ||\
+                                icmp6[icmp6type] = icmp6-neighboradvert ||\
+                                icmp6[icmp6type] = icmp6-redirect )";
         }
         if(inputArgs.mld)//MLD
         {
@@ -234,11 +270,14 @@ std::string Sniffer::getFilterString(ArgValues_t inputArgs)
             // MLDv1 Multicast Listener Report	131
             // MLDv2 Multicast Listener Report	143
             // Multicast Listener Done	132
-            filter += " && (icmp6-multicastlistenerquery ||\
-                            icmp6-multicastlistenerreportv1 ||\
-                            icmp6-multicastlistenerreportv2 ||\
-                            icmp6-multicastlistenerdone)";
+            protocols += " && ( icmp6[icmp6type] = icmp6-multicastlistenerquery ||\
+                                icmp6[icmp6type] = icmp6-multicastlistenerreportv1 ||\
+                                icmp6[icmp6type] = icmp6-multicastlistenerreportv2 ||\
+                                icmp6[icmp6type] = icmp6-multicastlistenerdone )";
         }
+        protocols += ")";
+        protocols.erase(5,4);
+        filter += protocols;
     }
 
 
@@ -253,7 +292,7 @@ std::string Sniffer::getFilterString(ArgValues_t inputArgs)
             filter.erase(0,4);
         }
     }
-
+    std::cout << filter << "\n";
     return filter;
 }
 
