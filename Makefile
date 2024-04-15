@@ -16,7 +16,7 @@ ipk-sniffer: $(OBJS)
 
 # Utils
 zip:
-	zip xsajko01.zip *.cpp *.h Makefile CHANGELOG.md LICENCE README.md
+	zip xsajko01.zip *.cpp *.h Makefile CHANGELOG.md LICENSE README.md test.py
 
 clean:
 	rm -f *.o ipk-sniffer

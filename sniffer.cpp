@@ -80,8 +80,8 @@ void printIpsPorts(const u_char *packetptr)
 
 
     //PORTs
-    int srcPort;
-    int dstPort;
+    int srcPort = 0;
+    int dstPort = 0;
     packetptr += 4*iphdr->ip_hl;
     switch (iphdr->ip_p)
     {
@@ -97,13 +97,6 @@ void printIpsPorts(const u_char *packetptr)
         struct udphdr *udphdr = (struct udphdr*)packetptr;
         srcPort = ntohs(udphdr->uh_sport);
         dstPort = ntohs(udphdr->uh_dport);
-        break;
-    }
-    case IPPROTO_ICMP:
-    {
-        struct icmp *icmphdr = (struct icmp*)packetptr;
-        // srcPort = ntohs(udphdr->th_sport);
-        // dstPort = ntohs(udphdr->th_dport);
         break;
     }
     }
