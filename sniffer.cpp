@@ -285,7 +285,6 @@ std::string Sniffer::getFilterString(ArgValues_t inputArgs)
             filter.erase(0,4);
         }
     }
-    std::cout << filter << "\n";
     return filter;
 }
 
