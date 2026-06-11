@@ -3,20 +3,26 @@
 # Author: Dominik Sajko (xsajko01)
 # Date: 04.04.2024
 
-CC = g++
-CFLAGS = -std=c++20 -Wall -Wextra -Werror -pedantic
+CXX = g++
+CXXFLAGS = -std=c++20 -Wall -Wextra -Werror -pedantic
+LDLIBS = -lpcap
 SRCS = $(wildcard *.cpp)
 OBJS := $(SRCS:%.cpp=%.o)
 
-.PHONY: clean zip
+.PHONY: all clean zip
+
+all: ipk-sniffer
 
 # Main target
 ipk-sniffer: $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ -lpcap
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Utils
 zip:
-	zip xsajko01.zip *.cpp *.h *.png Makefile CHANGELOG.md LICENSE README.md test.py
+	zip xsajko01.zip *.cpp *.h docs/assets/*.png Makefile CHANGELOG.md LICENSE README.md test.py
 
 clean:
 	rm -f *.o ipk-sniffer
